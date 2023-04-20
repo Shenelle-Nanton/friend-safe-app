@@ -147,28 +147,3 @@ class RegularUser(User):
     
     def __repr__(self):
         return f'<RegularUser {self.id} : {self.username} - {self.email}>'
-
-class Admin(User):
-    __tablename__ = 'Admin'
-    admin_id = db.Column(db.String(120), unique=True, nullable=False)
-
-    def get_all_chats_json(self):
-        chats = Chat.query.all()
-        if chats:
-            return [chat.get_json() for chat in chats]
-        else:
-            return[]
-
-    def get_all_chats(self):
-        return Chat.query.all()
-    
-    def search_chats(self, q, active, page):
-        matching_chats = None
-        if q != "" and active == "any":
-            matching_chats = Chat.query.join(RegularUser).filter(db.or_(RegularUser.username.ilike(f'%{q}%'), Chat.id.ilike(f'%{q}%')), Chat.done == is_active)
-        elif active != "any":
-            is_active = True if active == "true" else False
-            matching_chats = Chat.query.filter_by(active = is_active)
-        else:
-            matching_chats = Chat.query
-        return matching_chats.paginate(page = page, per_page = 15)
