@@ -192,7 +192,7 @@ class Admin(User):
             is_active = True if active == "true" else False
             matching_users = User.query.join(RegularUser).filter(
                 db.or_(RegularUser.username.ilike(f'%{q}%'), User.email.ilike(f'%{q}%'), User.id.ilike(f'%{q}%')),
-                User.done = is_active
+                User.active = is_active
             )
         elif active != "any":
             is_active = True if active == "true" else False
