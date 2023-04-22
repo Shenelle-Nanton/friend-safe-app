@@ -1,6 +1,8 @@
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import UserMixin
+from sqlalchemy.sql.expression import func
 from App.database import db
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -45,12 +47,18 @@ class Chat(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def cat_list(self):
+        return ', '.join([category.text for category in self.categories])
+
     def toJSON(self):
         return {
             "id": self.id,
             "text": self.text,
             "done": self.done
         }
+
+    def __repr__(self):
+        return f'<Chat: {self.id} | {self.user.username} | {self.text} | {"active" if self.done else "not active"} | categories{self.cat_list()}>'
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -139,11 +147,61 @@ class RegularUser(User):
         return chatSent
 
     def toJson(self):
-        return{
+        return {
             "id": self.id,
             "username": self.username,
             "email": self.email
         }
-    
+
     def __repr__(self):
         return f'<RegularUser {self.id} : {self.username} - {self.email}>'
+
+class Admin(User):
+    __tablename__ = 'Admin'
+    admin_id = db.Column(db.String(120), unique=True, nullable=False)
+
+    def get_all_chats_json(self):
+        chats = Chat.query.all()
+        if chats:
+            return [chat.get_json() for chat in chats]
+        else:
+            return []
+
+    def get_all_chats(self):
+        return Chat.query.all()
+
+    def search_chats(self, q, active, page):
+        matching_chats = None
+        if q != "" and active == "any":
+            matching_chats = Chat.query.join(RegularUser).filter(
+                db.or_(RegularUser.username.ilike(f'%{q}%'), Chat.id.ilike(f'%{q}%')), Chat.done == is_active)
+        elif active != "any":
+            is_active = True if active == "true" else False
+            matching_chats = Chat.query.filter_by(active=is_active)
+        else:
+            matching_chats = Chat.query
+        return matching_chats.paginate(page=page, per_page=15)
+
+    def search_users(self, q, active, page):
+        matching_users = None
+        if q != "" and active == "any":
+            matching_users = User.query.join(RegularUser).filter(
+                db.or_(RegularUser.username.ilike(f'%{q}%'), User.email.ilike(f'%{q}%'), User.id.ilike(f'%{q}%'))
+            )
+        elif q != "any":
+            is_active = True if active == "true" else False
+            matching_users = User.query.join(RegularUser).filter(
+                db.or_(RegularUser.username.ilike(f'%{q}%'), User.email.ilike(f'%{q}%'), User.id.ilike(f'%{q}%')),
+                User.done = is_active
+            )
+        elif active != "any":
+            is_active = True if active == "true" else False
+            matching_users = User.query.filter_by(
+                active = is_active
+            )
+        else:
+            matching_users = User.query
+        return matching_users.paginate(page=page, per_page=15)
+
+    def __repr__(self):
+        return f'<Administration {self.id} : {self.username} - {self.email}>'
