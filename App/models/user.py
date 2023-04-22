@@ -37,7 +37,7 @@ class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('regular_user.id'), nullable=False)
     text = db.Column(db.String(250), nullable=False)
-    done = db.Column(db.Boolean, default=False)
+    active = db.Column(db.Boolean, default=False)
 
     def __init__(self, text):
         self.text = text
