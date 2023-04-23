@@ -210,4 +210,4 @@ class Admin(User):
         return matching_users.paginate(page=page, per_page=15)
 
     def __repr__(self):
-        return f'<Administration {self.id} : {self.username} - {self.email}>'
+        return f'<Admin {self.id} : {self.username} - {self.email}>'
