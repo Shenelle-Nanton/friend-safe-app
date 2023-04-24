@@ -45,3 +45,54 @@ def create_app(config_overrides={}):
     setup_flask_login(app)
     app.app_context().push()
     return app
+
+@app.route('/', methods=['GET'])
+@app.route('login', methods=['GET'])
+def login_page():
+    return render_template('login.html')
+
+@app.route('/signup',methods=['GET'])
+def signup_page():
+    return render_template('signup.html')
+
+@app.route('/signup', methods=['POST'])
+def signup_action():
+    data = request.form
+    newuser = RegularUser(username=data['username'], email=data['email'], password=data['password'])
+    try:
+        db.session.add(newuser)
+        db.session.commit()
+        login_user(newuser)
+        flash('Account Created!')
+        return redirect(url_for())
+    except Exception:
+        db.session.rollback()
+        flash("Username or Email already exists!")
+    return redirect(url_for('**'))
+
+@app.route('/login', methods=['GET'])
+def login_action():
+    data = request.form
+    user = RegularUser.query.filter_by(username=data['username']).first()
+    if user and user.check_password(data['password']):
+        flash('Logged In Successfully')
+        login_user(user)
+        return redirect('/**')
+
+    admin = Admin.query.filter_by(username=data['username']).first()
+    if admin and admin.check_password(data['password']):
+        flash('Logged In Successfully')
+        login_user(admin)
+        return redirect('/**')
+
+    flash('Invalid Username or Password')
+    return redirect('/')
+
+@app.route('logout', methods=['GET'])
+def logout_action():
+    logout_user()
+    flash('Logged Out')
+    return redirect(url_for('login_page'))
+
+if __name__ == "__main__":
+  app.run(host='0.0.0.0', port=81)
