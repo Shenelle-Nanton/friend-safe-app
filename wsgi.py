@@ -1,7 +1,7 @@
 import click, pytest, sys
 from flask import Flask
 from flask.cli import with_appcontext, AppGroup
-
+from tabulate import tabulate
 from App.database import db, get_migrate
 from App.main import create_app
 from App.controllers import ( create_user, get_all_users_json, get_all_users )
@@ -67,3 +67,39 @@ def user_tests_command(type):
     
 
 app.cli.add_command(test)
+
+@click.argument('chat_id', default=1)
+@click.argument('username', default='bob')
+@app.cli.command('toggle-chat')
+def toggle_todo_command(chat_id, username):
+  user = RegularUser.query.filter_by(username=username).first()
+  if not user:
+    print(f'{username} not found!')
+    return
+  chat = Chat.query.filter_by(id=todo_id, user_id=user.id).first()
+  if not chat:
+    print(f'{username} has no chat id {chat_id}')
+  chat.toggle()
+  print(f'{chat.text} is {"active" if chat.active else "not active"}!')
+
+@click.argument('username', default='bob')
+@click.argument('chat_id', default=6)
+@click.argument('category', default='groupChat')
+@app.cli.command('add-category', help="Adds a category to a Chat")
+def add_chat_category_command(username, chat_id, category):
+  user = RegularUser.query.filter_by(username=username).first()
+  if not user:
+    print(f'{username} not found!')
+    return
+  res = user.add_chat_category(chat_id, category)
+  if not res:
+    print(f'{username} has no todo id {chat_id}')
+    return
+  print('Category added!')
+
+@app.cli.command('list-chats')
+def list_chats():
+  data = []
+  for chat in Chat.query.all():
+    data.append([ chat.text, chat.active, chat.user.username, chat.cat_list()])
+  print (tabulate(data, headers=["Text", "Active", "User", "Categories"]))
