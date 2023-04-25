@@ -71,12 +71,12 @@ app.cli.add_command(test)
 @click.argument('chat_id', default=1)
 @click.argument('username', default='bob')
 @app.cli.command('toggle-chat')
-def toggle_todo_command(chat_id, username):
+def toggle_chat_command(chat_id, username):
   user = RegularUser.query.filter_by(username=username).first()
   if not user:
     print(f'{username} not found!')
     return
-  chat = Chat.query.filter_by(id=todo_id, user_id=user.id).first()
+  chat = Chat.query.filter_by(id=chat_id, user_id=user.id).first()
   if not chat:
     print(f'{username} has no chat id {chat_id}')
   chat.toggle()
@@ -93,7 +93,7 @@ def add_chat_category_command(username, chat_id, category):
     return
   res = user.add_chat_category(chat_id, category)
   if not res:
-    print(f'{username} has no todo id {chat_id}')
+    print(f'{username} has no chat id {chat_id}')
     return
   print('Category added!')
 
